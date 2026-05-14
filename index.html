@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YKS-CORE vMax Pro | High-Performance Matching Engine</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --yks-green: #10b981; --yks-dark: #0f172a; --yks-accent: #3b82f6; --yks-bg: #f8fafc; }
+        body { background-color: var(--yks-bg); font-family: 'Outfit', sans-serif; color: #1e293b; }
+        .sidebar { background-color: var(--yks-dark); color: #fff; min-height: 100vh; padding: 30px; position: fixed; width: 340px; z-index: 1000; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
+        .main-content { margin-left: 340px; padding: 40px; }
+        .card { border: none; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); margin-bottom: 30px; background: #fff; border: 1px solid #e2e8f0; }
+        .stat-card { border-top: 5px solid var(--yks-green); }
+        .table-responsive-scroll { max-height: 550px; overflow-y: auto; border-radius: 12px; }
+        #loader { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.98); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; color: white; backdrop-filter: blur(15px); }
+        .maku-row { background-color: #f0fdf4 !important; border-left: 5px solid #22c55e !important; }
+        .progress { height: 14px; border-radius: 20px; background: rgba(255,255,255,0.1); }
+        .badge-rank { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #ef4444; font-size: 0.95rem; }
+        .btn-start { background: var(--yks-green); color: white; border: none; padding: 18px; border-radius: 15px; font-weight: 800; font-size: 1.1rem; transition: 0.3s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
+        .btn-start:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6); }
+    </style>
+</head>
+<body>
+
+<div id="loader">
+    <div class="spinner-border text-success" role="status" style="width: 5rem; height: 5rem; border-width: 0.5em;"></div>
+    <h2 class="mt-4 fw-800" id="loadStatus">Gale-Shapley vMax Pro Başlatılıyor</h2>
+    <div class="w-50 mt-4 text-center">
+        <div class="progress mb-3"><div id="loadBar" class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: 0%"></div></div>
+        <h5 id="loadPerc" class="fw-bold mb-2">0%</h5>
+        <p class="small opacity-75" id="loadDesc">Milyonlarca tercih olasılığı hesaplanıyor...</p>
+    </div>
+</div>
+
+<div class="sidebar">
+    <div class="text-center mb-5">
+        <h1 class="fw-800 text-success mb-1"><i class="fa-solid fa-microchip"></i> YKS-vMax</h1>
+        <p class="text-muted small fw-bold">ULTRA PERFORMANCE EDITION</p>
+    </div>
+    
+    <div class="mb-4">
+        <label class="form-label small fw-bold opacity-50">SİMÜLASYON KAPASİTESİ (N)</label>
+        <input type="number" id="studentCount" class="form-control bg-dark text-white border-0 py-3" value="50000" min="1000" max="250000">
+        <small class="text-muted">Max: 250.000 Aday</small>
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label small fw-bold opacity-50">POLİTİKA LABORATUVARI</label>
+        <select id="simMode" class="form-select bg-dark text-white border-0 py-3">
+            <option value="normal">Normal: Resmi Veriler</option>
+            <option value="crisis">Kriz: Şehir Terk Etme (Anadolu Patlaması)</option>
+            <option value="anadolu">Teşvik: Anadolu Kontenjan +%30</option>
+        </select>
+    </div>
+
+    <div class="form-check form-switch mb-5">
+        <input class="form-check-input" type="checkbox" id="useBarriers" checked>
+        <label class="form-check-label fw-bold small" for="useBarriers">YÖK Başarı Sırası Barajları</label>
+    </div>
+
+    <button id="startBtn" class="btn btn-start w-100"><i class="fa-solid fa-bolt me-2"></i>SİMÜLASYONU TETİKLE</button>
+</div>
+
+<div class="main-content">
+    <div class="row g-4 mb-4">
+        <div class="col-md-4"><div class="card p-4 stat-card"><small class="text-muted fw-bold">YERLEŞME ORANI</small><h2 class="fw-bold text-success" id="statRate">-%</h2></div></div>
+        <div class="col-md-4"><div class="card p-4 stat-card" style="border-top-color:#3b82f6"><small class="text-muted fw-bold">YERLEŞEN / AÇIKTA</small><h2 class="fw-bold text-primary" id="statCounts">- / -</h2></div></div>
+        <div class="col-md-4"><div class="card p-4 stat-card" style="border-top-color:#f59e0b"><small class="text-muted fw-bold">TOPLAM KONTENJAN</small><h2 class="fw-bold text-warning" id="statQuota">-</h2></div></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-7"><div class="card p-4"><h6><i class="fa-solid fa-chart-column me-2 text-success"></i>Puan Türü Doluluk Analizi</h6><div style="height: 320px;"><canvas id="chartArea"></canvas></div></div></div>
+        <div class="col-md-5"><div class="card p-4"><h6><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Kategori Dağılımı</h6><div style="height: 320px;"><canvas id="chartCat"></canvas></div></div></div>
+    </div>
+
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white">
+            <h5 class="fw-bold m-0"><i class="fa-solid fa-list-check me-2 text-success"></i>YÖK ATLAS + GALE-SHAPLEY OPTİMİZE ANALİZ</h5>
+            <button id="csvBtn" class="btn btn-dark btn-sm px-4 fw-bold" disabled><i class="fa-solid fa-download me-2"></i>CSV DIŞA AKTAR</button>
+        </div>
+        <div class="table-responsive-scroll">
+            <table class="table table-hover align-middle mb-0" id="deptTable">
+                <thead class="bg-light sticky-top">
+                    <tr><th>Program & Üniversite</th><th>Alan</th><th>Kategori</th><th>Knj.</th><th>Yerleşen</th><th>Taban Sıralama</th><th>Durum</th></tr>
+                </thead>
+                <tbody><tr><td colspan="7" class="text-center py-5 text-muted">Simülasyon verisi bekleniyor...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ULTRA-FAST MAX-HEAP FOR GALE-SHAPLEY ---
+    class MaxHeap {
+        constructor() { this.heap = []; }
+        push(val) { this.heap.push(val); this.bubbleUp(); }
+        pop() {
+            if (this.size() === 1) return this.heap.pop();
+            const top = this.heap[0]; this.heap[0] = this.heap.pop(); this.bubbleDown();
+            return top;
+        }
+        peek() { return this.heap[0]; }
+        size() { return this.heap.length; }
+        bubbleUp() {
+            let index = this.heap.length - 1;
+            while (index > 0) {
+                let parentIndex = Math.floor((index - 1) / 2);
+                if (this.heap[parentIndex].rank >= this.heap[index].rank) break;
+                [this.heap[parentIndex], this.heap[index]] = [this.heap[index], this.heap[parentIndex]];
+                index = parentIndex;
+            }
+        }
+        bubbleDown() {
+            let index = 0;
+            while (true) {
+                let left = 2 * index + 1, right = 2 * index + 2, swap = null;
+                if (left < this.heap.length) if (this.heap[left].rank > this.heap[index].rank) swap = left;
+                if (right < this.heap.length) if (this.heap[right].rank > (swap === null ? this.heap[index].rank : this.heap[left].rank)) swap = right;
+                if (swap === null) break;
+                [this.heap[index], this.heap[swap]] = [this.heap[swap], this.heap[index]];
+                index = swap;
+            }
+        }
+    }
+
+    const BASE_DATA = [
+        { name: "Tıp Fakültesi", uni: "Hacettepe Üniversitesi", city: "Ankara", area: "SAY", cat: "Köklü", quota: 250, base: 1200, pop: 1.0 },
+        { name: "Tıp Fakültesi", uni: "Cerrahpaşa-İstanbul Üni.", city: "İstanbul", area: "SAY", cat: "Köklü", quota: 300, base: 2300, pop: 1.0 },
+        { name: "Bilgisayar Mühendisliği", uni: "ODTÜ", city: "Ankara", area: "SAY", cat: "Köklü", quota: 105, base: 1900, pop: 1.0 },
+        { name: "Bilgisayar Mühendisliği", uni: "İTÜ", city: "İstanbul", area: "SAY", cat: "Köklü", quota: 110, base: 2600, pop: 0.99 },
+        { name: "Hukuk Fakültesi", uni: "Ankara Üniversitesi", city: "Ankara", area: "EA", cat: "Köklü", quota: 450, base: 4500, pop: 0.96 },
+        { name: "Hukuk Fakültesi", uni: "MAKÜ", city: "Burdur", area: "EA", cat: "Anadolu", quota: 120, base: 38000, pop: 0.90 },
+        { name: "Veteriner Fakültesi", uni: "MAKÜ", city: "Burdur", area: "SAY", cat: "Anadolu", quota: 120, base: 125000, pop: 0.92 },
+        { name: "Psikoloji", uni: "Boğaziçi Üniversitesi", city: "İstanbul", area: "EA", cat: "Köklü", quota: 80, base: 1900, pop: 1.0 },
+        { name: "İngilizce Öğretmenliği", uni: "ODTÜ", city: "Ankara", area: "DİL", cat: "Köklü", quota: 80, base: 2400, pop: 0.98 },
+        { name: "Gastronomi", uni: "Akdeniz Üniversitesi", city: "Antalya", area: "SÖZ", cat: "Anadolu", quota: 80, base: 22000, pop: 0.90 }
+    ];
+
+    // Havuz Genişletme (150+ Program)
+    const REAL_DATA = [...BASE_DATA];
+    const poolCities = ["Sivas", "Eskişehir", "Kayseri", "Trabzon", "Samsun", "Erzurum", "Van", "Bolu", "Isparta", "Denizli"];
+    poolCities.forEach(city => {
+        ["Mühendislik", "İşletme", "Eğitim", "Mimarlık", "Sağlık"].forEach(dept => {
+            REAL_DATA.push({
+                name: dept + " Programları", uni: city + " Üniversitesi", city: city, area: Math.random() < 0.6 ? "SAY" : "EA", cat: city === "Eskişehir" ? "Anadolu" : "Taşra",
+                quota: 100, base: Math.floor(Math.random() * 250000) + 40000, pop: 0.7
+            });
+        });
+    });
+
+    let students = [];
+    let deptRes = [];
+    let charts = {};
+
+    function boxMuller() {
+        let u=0, v=0; while(u===0) u=Math.random(); while(v===0) v=Math.random();
+        return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    }
+
+    document.getElementById('startBtn').addEventListener('click', async function() {
+        const N = parseInt(document.getElementById('studentCount').value);
+        const mode = document.getElementById('simMode').value;
+        const bars = document.getElementById('useBarriers').checked;
+        
+        document.getElementById('loader').style.display = 'flex';
+        this.disabled = true;
+
+        // 1. DATA PREP
+        deptRes = REAL_DATA.map((d, i) => {
+            let q = Math.round(d.quota * (N/40000));
+            let p = d.pop;
+            if(mode === 'crisis') {
+                if(d.city === "İstanbul" || d.city === "Ankara") p *= 0.1;
+                if(d.uni.includes("MAKÜ") || d.cat === "Taşra") p *= 10.0;
+            }
+            if(mode === 'anadolu' && d.cat === "Anadolu") q = Math.round(q * 1.3);
+            return { ...d, id: i, quota: Math.max(1, q), currentPop: p, heap: new MaxHeap(), minRank: 0 };
+        });
+
+        // 2. ADAY ÜRETİMİ (Gaussian)
+        students = [];
+        for(let i=0; i<N; i++) {
+            let score = boxMuller() * 55 + 285;
+            let area = Math.random() < 0.35 ? "SAY" : (Math.random() < 0.72 ? "EA" : (Math.random() < 0.92 ? "SÖZ" : "DİL"));
+            students.push({ id: 500000+i, score, area, rank: 0, placed: null, choices: [], nextChoiceIdx: 0 });
+            if(i%20000===0) { updateProgress(i/N*10, "Adaylar Modelleniyor..."); await new Promise(r => setTimeout(r,0)); }
+        }
+        students.sort((a,b) => b.score - a.score).forEach((s, idx) => s.rank = idx + 1);
+
+        // 3. TERCİH MOTORU (Stratejik)
+        const participants = students.filter(() => Math.random() < 0.85);
+        for(let i=0; i<participants.length; i++) {
+            const s = participants[i];
+            let pool = deptRes.filter(d => {
+                if(d.area !== s.area) return false;
+                if(bars) { if(d.name.includes("Tıp") && s.rank > 50000) return false; if(d.name.includes("Hukuk") && s.rank > 125000) return false; }
+                return d.base >= s.rank * 0.2 && d.base <= s.rank * 6.0;
+            });
+            pool.sort((a,b) => (b.currentPop * Math.random()) - (a.currentPop * Math.random()));
+            s.choices = pool.slice(0, 24).sort((a,b) => a.base - b.base).map(x => x.id);
+            if(i%10000===0) { updateProgress(10+(i/participants.length*20), "Tercih Psikolojisi Simüle Ediliyor..."); await new Promise(r => setTimeout(r,0)); }
+        }
+
+        // 4. GALE-SHAPLEY PRO ENGINE (Lightning Fast Queue + Heaps)
+        let queue = participants;
+        let head = 0;
+        let totalSteps = 0;
+        const deptMap = {}; deptRes.forEach(d => deptMap[d.id] = d);
+
+        while(head < queue.length) {
+            let s = queue[head];
+            head++; // Fast pointer move
+
+            if(s.nextChoiceIdx >= s.choices.length) { s.placed = null; continue; }
+
+            let d = deptMap[s.choices[s.nextChoiceIdx]];
+            s.nextChoiceIdx++;
+
+            if(d.heap.size() < d.quota) {
+                d.heap.push(s);
+                s.placed = d.uni + " - " + d.name;
+            } else {
+                let worst = d.heap.peek();
+                if(s.rank < worst.rank) {
+                    d.heap.pop();
+                    worst.placed = null;
+                    queue.push(worst); // Displacement re-entry
+
+                    d.heap.push(s);
+                    s.placed = d.uni + " - " + d.name;
+                } else {
+                    queue.push(s); // Re-entry for next choice
+                }
+            }
+
+            totalSteps++;
+            if(totalSteps % 10000 === 0) {
+                updateProgress(30 + (Math.min(1, totalSteps / (participants.length * 4)) * 70), "Gale-Shapley Kararlılık Çözümleniyor...");
+                await new Promise(r => setTimeout(r, 0));
+            }
+            if(totalSteps > participants.length * 25) break; 
+        }
+
+        finalizeUI(N, participants.length);
+    });
+
+    function updateProgress(p, t) {
+        document.getElementById('loadBar').style.width = Math.min(100, p) + "%";
+        document.getElementById('loadPerc').innerText = "%" + Math.floor(p);
+        document.getElementById('loadStatus').innerText = t;
+    }
+
+    function finalizeUI(N, activeCount) {
+        let placedArr = students.filter(s => s.placed);
+        document.getElementById('statRate').innerText = "%" + (placedArr.length/activeCount*100).toFixed(1);
+        document.getElementById('statCounts').innerText = `${placedArr.length.toLocaleString()} / ${(activeCount-placedArr.length).toLocaleString()}`;
+        document.getElementById('statQuota').innerText = deptRes.reduce((a,b) => a+b.quota, 0).toLocaleString();
+
+        let tbody = "";
+        deptRes.sort((a,b) => (b.heap.size()/b.quota) - (a.heap.size()/a.quota)).forEach(d => {
+            let fill = (d.heap.size()/d.quota*100).toFixed(0);
+            let lastRank = d.heap.size() > 0 ? d.heap.peek().rank : 0;
+            let isMaku = d.uni.includes("MAKÜ");
+            tbody += `<tr class="${isMaku?'maku-row':''}">
+                <td><strong>${d.uni}</strong><br><small class="text-muted">${d.name}</small></td>
+                <td><span class="badge bg-secondary opacity-75">${d.area}</span></td>
+                <td>${d.cat}</td>
+                <td>${d.quota}</td>
+                <td>${d.heap.size()}</td>
+                <td class="badge-rank">${lastRank > 0 ? lastRank.toLocaleString() : 'Puan Düştü'}</td>
+                <td><div class="progress" style="display:flex; height: 10px;"><div class="progress-bar ${fill<100?'bg-warning':'bg-success'}" style="width:${fill}%"></div></div></td>
+            </tr>`;
+        });
+        document.querySelector("#deptTable tbody").innerHTML = tbody;
+        renderCharts();
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('csvBtn').disabled = false;
+    }
+
+    function renderCharts() {
+        ['chartArea', 'chartCat'].forEach(id => { if(charts[id]) charts[id].destroy(); });
+        const ctxArea = document.getElementById('chartArea').getContext('2d');
+        charts.chartArea = new Chart(ctxArea, {
+            type: 'bar',
+            data: { labels: ['SAY','EA','SÖZ','DİL'], datasets: [{ label: '% Doluluk', data: ['SAY','EA','SÖZ','DİL'].map(a => {
+                let d = deptRes.filter(x => x.area === a);
+                return (d.reduce((s,v)=>s+v.heap.size(),0)/d.reduce((s,v)=>s+v.quota,0)*100).toFixed(1);
+            }), backgroundColor: '#10b981' }] },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+        const ctxCat = document.getElementById('chartCat').getContext('2d');
+        charts.chartCat = new Chart(ctxCat, {
+            type: 'doughnut',
+            data: { labels: ['Köklü','Anadolu','Taşra'], datasets: [{ data: ['Köklü','Anadolu','Taşra'].map(c => deptRes.filter(x=>x.cat===c).reduce((s,v)=>s+v.heap.size(),0)), backgroundColor: ['#0f172a','#10b981','#f59e0b'] }] },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    document.getElementById('csvBtn').addEventListener('click', () => {
+        let csv = "AdayID,SimuleSira,Alan,YerlestigiProgram\n";
+        students.forEach(s => { csv += `${s.id},${s.rank},${s.area},"${s.placed||'Açıkta Kaldı'}"\n`; });
+        let blob = new Blob(["\uFEFF"+csv], { type: 'text/csv;charset=utf-8;' });
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "YKS_vMax_Pro_Output.csv";
+        link.click();
+    });
+</script>
+</body>
+</html>
