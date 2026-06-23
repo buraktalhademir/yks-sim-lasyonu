@@ -3,132 +3,441 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YKS-CORE vMax Pro v2.0 | Final Project Evaluation</title>
+    <title>YKS Premium Karar Destek Paneli | ÖSYM Gerçek Veri</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- ÖSYM Gerçek Veri (21.602 Program, Otomatik Gömülü) -->
+    <script src="osym_data.js"></script>
+
     <style>
-        :root { --yks-green: #10b981; --yks-dark: #0f172a; --yks-accent: #3b82f6; --yks-bg: #f8fafc; }
-        body { background-color: var(--yks-bg); font-family: 'Outfit', sans-serif; color: #1e293b; }
-        .sidebar { background-color: var(--yks-dark); color: #fff; min-height: 100vh; padding: 30px; position: fixed; width: 340px; z-index: 1000; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
-        .main-content { margin-left: 340px; padding: 40px; }
-        .card { border: none; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); margin-bottom: 30px; background: #fff; border: 1px solid #e2e8f0; }
-        .stat-card { border-top: 5px solid var(--yks-green); }
-        .table-responsive-scroll { max-height: 550px; overflow-y: auto; border-radius: 12px; }
-        #loader { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.98); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; color: white; backdrop-filter: blur(15px); }
-        .maku-row { background-color: #f0fdf4 !important; border-left: 5px solid #22c55e !important; }
-        .progress { height: 14px; border-radius: 20px; background: rgba(255,255,255,0.1); }
-        .badge-rank { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #ef4444; font-size: 0.95rem; }
-        .btn-start { background: var(--yks-green); color: white; border: none; padding: 18px; border-radius: 15px; font-weight: 800; font-size: 1.1rem; transition: 0.3s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
-        .btn-start:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6); }
+        :root {
+            --bg-light: #f3f6fd;
+            --sidebar-bg-1: #0f172a;
+            --sidebar-bg-2: #1e293b;
+            --primary: #4f46e5;
+            --secondary: #0ea5e9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 10px 30px rgba(31, 38, 135, 0.07);
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: #1e293b; overflow-x: hidden; margin: 0; }
+
+        .sidebar {
+            background: linear-gradient(180deg, var(--sidebar-bg-1) 0%, var(--sidebar-bg-2) 100%);
+            color: #fff; height: 100vh; width: 340px; position: fixed; top: 0; left: 0;
+            padding: 24px 18px; box-shadow: 10px 0 30px rgba(0,0,0,0.15); z-index: 1000; overflow-y: auto;
+        }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        .main-content { margin-left: 340px; padding: 40px; min-height: 100vh; }
+
+        .glass-card {
+            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: var(--glass-shadow);
+            padding: 24px; margin-bottom: 24px; transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(31, 38, 135, 0.1); }
+
+        .stat-rate { border-left: 6px solid var(--success); }
+        .stat-counts { border-left: 6px solid var(--primary); }
+        .stat-quota { border-left: 6px solid var(--warning); }
+
+        .sidebar-control {
+            margin-bottom: 18px; background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-control label {
+            font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+            color: #94a3b8; margin-bottom: 8px; display: block;
+        }
+        .custom-input { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; }
+        .custom-input:focus { background: rgba(0,0,0,0.3); color: white; border-color: var(--primary); box-shadow: none; }
+
+        .btn-start {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white; border: none; padding: 16px; border-radius: 15px; font-weight: 800; font-size: 1rem;
+            width: 100%; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4); margin-top: 10px;
+        }
+        .btn-start:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(79, 70, 229, 0.6); color: white; }
+        .btn-start:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .table-wrapper { max-height: 500px; overflow-y: auto; border-radius: 12px; }
+        .table-wrapper::-webkit-scrollbar { width: 8px; }
+        .table-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.02); }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-table th {
+            position: sticky; top: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(5px);
+            z-index: 10; font-weight: 700; color: #64748b; text-transform: uppercase; font-size: 0.7rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .custom-table td { vertical-align: middle; padding: 10px 12px; font-size: 0.85rem; }
+        .progress-bar-custom { height: 10px; border-radius: 10px; background: rgba(0,0,0,0.05); overflow: hidden; display: flex; }
+        .rank-badge { font-family: monospace; font-weight: 700; color: var(--danger); }
+
+        #loader {
+            position: fixed; inset: 0; background: rgba(15,23,42,0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;
+            opacity: 0; visibility: hidden; transition: all 0.4s ease;
+        }
+        .spinner-core {
+            width: 100px; height: 100px; border-radius: 50%; border: 4px solid transparent;
+            border-top-color: var(--secondary); border-bottom-color: var(--primary);
+            animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; position: relative; margin-bottom: 30px;
+        }
+        .spinner-core::before {
+            content: ''; position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px;
+            border-radius: 50%; border: 3px solid transparent; border-left-color: var(--warning); border-right-color: var(--success);
+            animation: spin-reverse 0.8s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spin-reverse { 100% { transform: rotate(-360deg); } }
+
+        .data-badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: 700; }
+        .db-status { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 10px 14px; }
     </style>
 </head>
 <body>
 
 <div id="loader">
-    <div class="spinner-border text-success" role="status" style="width: 5rem; height: 5rem; border-width: 0.5em;"></div>
-    <h2 class="mt-4 fw-800" id="loadStatus">Gale-Shapley vMax Pro v2.0 Başlatılıyor</h2>
-    <div class="w-50 mt-4 text-center">
-        <div class="progress mb-3"><div id="loadBar" class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: 0%"></div></div>
-        <h5 id="loadPerc" class="fw-bold mb-2">0%</h5>
-        <p class="small opacity-75" id="loadDesc">Milyonlarca tercih olasılığı hesaplanıyor...</p>
+    <div class="spinner-core"></div>
+    <h2 class="fw-bold" id="loadStatus">Simülasyon Hesaplanıyor...</h2>
+    <div class="w-25 mt-4">
+        <div class="progress" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+            <div id="loadBar" class="progress-bar bg-info progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+        </div>
+        <div class="d-flex justify-content-between mt-2">
+            <small class="text-white-50" id="loadDesc">Gale-Shapley Motoru Hazırlanıyor</small>
+            <small class="fw-bold" id="loadPerc">0%</small>
+        </div>
     </div>
 </div>
 
 <div class="sidebar">
-    <div class="text-center mb-5">
-        <h1 class="fw-800 text-success mb-1"><i class="fa-solid fa-server"></i> YKS-vMax v2.0</h1>
-        <p class="text-muted small fw-bold">FINAL COMPLIANCE EDITION</p>
-    </div>
-    
-    <div class="mb-4">
-        <label class="form-label small fw-bold opacity-50">SİMÜLASYON KAPASİTESİ (N)</label>
-        <input type="number" id="studentCount" class="form-control bg-dark text-white border-0 py-3" value="50000" min="1000" max="250000">
-        <small class="text-muted">Max: 250.000 Aday</small>
+    <div class="text-center mb-4 mt-1">
+        <h2 class="fw-bold text-white mb-1" style="font-size: 1.4rem;"><i class="fa-solid fa-cube text-info me-2"></i>vMax Pro</h2>
+        <span class="badge bg-danger bg-opacity-25 text-danger border border-danger rounded-pill px-3 py-1" style="font-size: 0.65rem;">ÖSYM GERÇEK VERİ ENTEGRASYONU</span>
     </div>
 
-    <div class="mb-4">
-        <label class="form-label small fw-bold opacity-50">POLİTİKA LABORATUVARI</label>
-        <select id="simMode" class="form-select bg-dark text-white border-0 py-3">
+    <!-- VERİTABANI DURUMU -->
+    <div class="db-status mb-3">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <div class="text-success fw-bold" style="font-size: 0.75rem;"><i class="fa-solid fa-database me-1"></i>VERİTABANI AKTİF</div>
+                <div class="text-white-50" style="font-size: 0.65rem;" id="dbInfo">Yükleniyor...</div>
+            </div>
+            <div class="text-end">
+                <div class="text-success fw-bold" style="font-size: 1.1rem;" id="dbCount">-</div>
+                <div class="text-white-50" style="font-size: 0.6rem;">Program</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-control">
+        <label><i class="fa-solid fa-users me-2"></i>Aday Sayısı (N)</label>
+        <input type="number" id="studentCount" class="form-control custom-input" value="100000" min="10000" max="5000000">
+        <small class="text-white-50 mt-1 d-block" style="font-size: 0.65rem;">Gerçek YKS 2025: ~3.036.945</small>
+    </div>
+
+    <div class="sidebar-control">
+        <label><i class="fa-solid fa-flask me-2"></i>Politika Modu</label>
+        <select id="simMode" class="form-select custom-input">
             <option value="normal">Normal: Resmi Dengeler</option>
-            <option value="crisis">Kriz: Şehir Terk Etme (Anadolu Patlaması)</option>
+            <option value="crisis">Kriz: Şehir Terk Etme</option>
             <option value="anadolu">Teşvik: Anadolu Kontenjan Artırımı</option>
         </select>
     </div>
 
-    <div class="mb-4">
-        <label class="form-label small fw-bold opacity-50">POLİTİKA ETKİ KATSAYISI (%)</label>
+    <div class="sidebar-control">
+        <label class="d-flex justify-content-between">
+            <span><i class="fa-solid fa-bolt me-2"></i>Politika Şiddeti</span>
+            <span id="policyVal" class="text-info fw-bold">30%</span>
+        </label>
         <input type="range" id="policyIntensity" class="form-range" min="10" max="100" value="30">
-        <div class="text-end"><span id="intensityVal" class="badge bg-secondary">30%</span></div>
     </div>
 
-    <div class="form-check form-switch mb-5">
-        <input class="form-check-input" type="checkbox" id="useBarriers" checked>
-        <label class="form-check-label fw-bold small" for="useBarriers">YÖK Başarı Sırası Barajları (Tümü)</label>
+    <div class="sidebar-control">
+        <label class="d-flex justify-content-between">
+            <span><i class="fa-solid fa-arrow-trend-up me-2"></i>OBP Enflasyonu</span>
+            <span id="obpVal" class="text-warning fw-bold">15%</span>
+        </label>
+        <input type="range" id="obpInflation" class="form-range" min="0" max="100" value="15">
+        <small class="text-white-50 mt-1 d-block" style="font-size: 0.65rem;">Gauss dağılımına adaletsiz noise ekler</small>
     </div>
 
-    <button id="startBtn" class="btn btn-start w-100"><i class="fa-solid fa-play me-2"></i>SİMÜLASYONU BAŞLAT</button>
+    <div class="sidebar-control d-flex justify-content-between align-items-center">
+        <label class="mb-0" style="font-size: 0.75rem;"><i class="fa-solid fa-shield-halved me-2"></i>YÖK Barajları</label>
+        <div class="form-check form-switch" style="transform: scale(1.3); margin-right: 5px;">
+            <input class="form-check-input bg-success border-success" type="checkbox" id="useBarriers" checked style="cursor:pointer;">
+        </div>
+    </div>
+
+    <button id="startBtn" class="btn-start"><i class="fa-solid fa-play me-2"></i>SİMÜLASYONU BAŞLAT</button>
 </div>
 
 <div class="main-content">
-    <div class="row g-4 mb-4">
-        <div class="col-md-4"><div class="card p-4 stat-card"><small class="text-muted fw-bold">YERLEŞME ORANI</small><h2 class="fw-bold text-success" id="statRate">-%</h2></div></div>
-        <div class="col-md-4"><div class="card p-4 stat-card" style="border-top-color:#3b82f6"><small class="text-muted fw-bold">YERLEŞEN / AÇIKTA</small><h2 class="fw-bold text-primary" id="statCounts">- / -</h2></div></div>
-        <div class="col-md-4"><div class="card p-4 stat-card" style="border-top-color:#f59e0b"><small class="text-muted fw-bold">TOPLAM KONTENJAN</small><h2 class="fw-bold text-warning" id="statQuota">-</h2></div></div>
-    </div>
-
-    <div class="row g-4 mb-5">
-        <div class="col-md-7"><div class="card p-4"><h6><i class="fa-solid fa-chart-bar me-2 text-success"></i>Puan Türü Dağılımı ve Doluluk</h6><div style="height: 320px;"><canvas id="chartArea"></canvas></div></div></div>
-        <div class="col-md-5"><div class="card p-4"><h6><i class="fa-solid fa-pie-chart me-2 text-primary"></i>Kurumsal Dağılım Faktörü</h6><div style="height: 320px;"><canvas id="chartCat"></canvas></div></div></div>
-    </div>
-
-    <div class="card border-0 shadow-sm overflow-hidden">
-        <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white">
-            <h5 class="fw-bold m-0"><i class="fa-solid fa-graduation-cap me-2 text-success"></i>YÖK Nitelikli Ulusal Kontenjan Matrisi</h5>
-            <button id="csvBtn" class="btn btn-dark btn-sm px-4 fw-bold" disabled><i class="fa-solid fa-file-csv me-2"></i>GÜVENLİ CSV DIŞA AKTAR</button>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">Karar Destek Paneli</h3>
+            <p class="text-muted mb-0">ÖSYM 2025 Gerçek Veri ile Gale-Shapley Yerleştirme Simülasyonu</p>
         </div>
-        <div class="table-responsive-scroll">
-            <table class="table table-hover align-middle mb-0" id="deptTable">
-                <thead class="bg-light sticky-top">
-                    <tr><th>Program & Üniversite</th><th>Alan</th><th>Kategori</th><th>Knj.</th><th>Yerleşen</th><th>Taban Sıralama</th><th>Doluluk Oranı</th></tr>
+        <div id="sysStatus" class="d-flex align-items-center bg-white px-4 py-2 rounded-pill shadow-sm border">
+            <div class="spinner-grow spinner-grow-sm text-success me-2" role="status"></div>
+            <span class="fw-bold text-dark" style="font-size: 0.85rem;" id="sysText">Sistem Hazır</span>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="glass-card stat-rate m-0 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">YERLEŞME ORANI</p>
+                        <h2 class="fw-bold text-success mb-0" id="statRate">-%</h2>
+                    </div>
+                    <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle"><i class="fa-solid fa-chart-pie fa-lg"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-card stat-counts m-0 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">YERLEŞEN / AÇIKTA</p>
+                        <h2 class="fw-bold text-primary mb-0" id="statCounts">- / -</h2>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle"><i class="fa-solid fa-users fa-lg"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-card stat-quota m-0 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">TOPLAM KONTENJAN</p>
+                        <h2 class="fw-bold text-warning mb-0" id="statQuota">-</h2>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle"><i class="fa-solid fa-university fa-lg"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="glass-card m-0 h-100">
+                <h6 class="fw-bold text-dark mb-4"><i class="fa-solid fa-chart-bar text-primary me-2"></i>Puan Türü Dağılımı ve Doluluk</h6>
+                <div style="height: 300px;"><canvas id="chartArea"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="glass-card m-0 h-100">
+                <h6 class="fw-bold text-dark mb-4"><i class="fa-solid fa-chart-pie text-success me-2"></i>Üniversite Türü Dağılımı</h6>
+                <div style="height: 300px;"><canvas id="chartCat"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card p-0 overflow-hidden">
+        <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white bg-opacity-50">
+            <h5 class="fw-bold m-0"><i class="fa-solid fa-table-list text-info me-2"></i>Ulusal Kontenjan Matrisi <small class="text-muted fw-normal" id="tableCount"></small></h5>
+            <button id="csvBtn" class="btn btn-dark btn-sm px-4 fw-bold rounded-pill shadow-sm" disabled>
+                <i class="fa-solid fa-download me-2"></i>GÜVENLİ CSV AKTAR
+            </button>
+        </div>
+        <div class="table-wrapper">
+            <table class="table table-hover align-middle mb-0 custom-table" id="deptTable">
+                <thead>
+                    <tr>
+                        <th class="ps-3">Program & Üniversite</th>
+                        <th>Puan Türü</th>
+                        <th>Tür</th>
+                        <th>Kontenjan</th>
+                        <th>Yerleşen</th>
+                        <th>Taban Puan</th>
+                        <th class="pe-3">Doluluk</th>
+                    </tr>
                 </thead>
-                <tbody><tr><td colspan="7" class="text-center py-5 text-muted">Simülasyon motoru tetiklenmeye hazır...</td></tr></tbody>
+                <tbody>
+                    <tr><td colspan="7" class="text-center py-5 text-muted fw-medium"><i class="fa-solid fa-database fa-2x mb-3 text-success opacity-50 d-block"></i>Veritabanı yüklendi. Simülasyonu başlatın.</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
 </div>
 
 <script>
-    document.getElementById('policyIntensity').addEventListener('input', function() {
-        document.getElementById('intensityVal').innerText = this.value + "%";
-    });
+    // === SLIDER GÜNCELLEMELERİ ===
+    document.getElementById('policyIntensity').addEventListener('input', function() { document.getElementById('policyVal').innerText = this.value + "%"; });
+    document.getElementById('obpInflation').addEventListener('input', function() { document.getElementById('obpVal').innerText = this.value + "%"; });
 
+    // === GLOBAL STATE ===
+    let students = [];
+    let deptRes = [];
+    let charts = {};
+
+    // === ŞEHİR → BÖLGE HARİTASI ===
+    const CITY_REGION = {
+        'İSTANBUL':'Marmara','BURSA':'Marmara','KOCAELİ':'Marmara','TEKİRDAĞ':'Marmara','BALIKESİR':'Marmara',
+        'ÇANAKKALE':'Marmara','EDİRNE':'Marmara','KIRKLARELİ':'Marmara','SAKARYA':'Marmara','YALOVA':'Marmara','BİLECİK':'Marmara',
+        'ANKARA':'İç Anadolu','KONYA':'İç Anadolu','KAYSERİ':'İç Anadolu','ESKİŞEHİR':'İç Anadolu',
+        'SİVAS':'İç Anadolu','YOZGAT':'İç Anadolu','KIRŞEHİR':'İç Anadolu','NEVŞEHİR':'İç Anadolu',
+        'NİĞDE':'İç Anadolu','AKSARAY':'İç Anadolu','KARAMAN':'İç Anadolu','KIRIKKALE':'İç Anadolu','ÇANKIRI':'İç Anadolu',
+        'İZMİR':'Ege','DENİZLİ':'Ege','MUĞLA':'Ege','AYDIN':'Ege','MANİSA':'Ege','KÜTAHYA':'Ege',
+        'AFYONKARAHİSAR':'Ege','UŞAK':'Ege',
+        'ANTALYA':'Akdeniz','ADANA':'Akdeniz','MERSİN':'Akdeniz','ISPARTA':'Akdeniz','BURDUR':'Akdeniz',
+        'HATAY':'Akdeniz','OSMANİYE':'Akdeniz','KAHRAMANMARAŞ':'Akdeniz',
+        'TRABZON':'Karadeniz','SAMSUN':'Karadeniz','ORDU':'Karadeniz','GİRESUN':'Karadeniz','RİZE':'Karadeniz',
+        'ARTVİN':'Karadeniz','GÜMÜŞHANE':'Karadeniz','BAYBURT':'Karadeniz','TOKAT':'Karadeniz','AMASYA':'Karadeniz',
+        'SİNOP':'Karadeniz','KASTAMONU':'Karadeniz','ÇORUM':'Karadeniz','ZONGULDAK':'Karadeniz','BOLU':'Karadeniz',
+        'DÜZCE':'Karadeniz','BARTIN':'Karadeniz','KARABÜK':'Karadeniz',
+        'ERZURUM':'Doğu Anadolu','VAN':'Doğu Anadolu','MALATYA':'Doğu Anadolu','ELAZIĞ':'Doğu Anadolu',
+        'ERZİNCAN':'Doğu Anadolu','KARS':'Doğu Anadolu','IĞDIR':'Doğu Anadolu','AĞRI':'Doğu Anadolu',
+        'MUŞ':'Doğu Anadolu','BİNGÖL':'Doğu Anadolu','TUNCELİ':'Doğu Anadolu','BİTLİS':'Doğu Anadolu',
+        'HAKKARİ':'Doğu Anadolu','ARDAHAN':'Doğu Anadolu',
+        'GAZİANTEP':'Güneydoğu','DİYARBAKIR':'Güneydoğu','ŞANLIURFA':'Güneydoğu','MARDİN':'Güneydoğu',
+        'BATMAN':'Güneydoğu','ŞIRNAK':'Güneydoğu','SİİRT':'Güneydoğu','KİLİS':'Güneydoğu','ADIYAMAN':'Güneydoğu'
+    };
+
+    function getRegion(uniAdi) {
+        const match = uniAdi.match(/\(([^)]+)\)$/);
+        if (!match) return 'Diğer';
+        const city = match[1].trim().toUpperCase();
+        for (const [key, val] of Object.entries(CITY_REGION)) {
+            if (city.includes(key) || key.includes(city)) return val;
+        }
+        return 'Diğer';
+    }
+
+    // Puan → Sıralama dönüşümü
+    function puanToSiralama(puan) {
+        if (!puan || puan <= 0) return 2000000;
+        if (puan >= 500) return Math.max(100, Math.round(500 - (puan - 500) * 10));
+        if (puan >= 400) return Math.round(500 + (500 - puan) * 800);
+        if (puan >= 300) return Math.round(80500 + (400 - puan) * 8000);
+        if (puan >= 200) return Math.round(880500 + (300 - puan) * 11000);
+        return 2000000;
+    }
+
+    // === VERİTABANI YÜKLEME (osym_data.js'den otomatik) ===
+    // OSYM_RAW format: [UniAdi, ProgramAdi, PuanTuru, Kontenjan, Yerlesen, EnKucukPuan, UniTuru(D/V), Kaynak(L/O)]
+    function buildDatabase() {
+        const data = [];
+        let totalKontenjan = 0;
+        const uniSet = new Set();
+
+        OSYM_RAW.forEach((row, i) => {
+            const [uni, prog, pt, kontenjan, yerlesen, enKucuk, uniTuru, kaynak] = row;
+            if (!uni || !prog || kontenjan <= 0) return;
+
+            uniSet.add(uni);
+            totalKontenjan += kontenjan;
+
+            data.push({
+                id: i,
+                uni: uni,
+                name: prog,
+                area: pt,
+                uniTuru: uniTuru === 'D' ? 'DEVLET' : 'VAKIF',
+                region: getRegion(uni),
+                quota: kontenjan,
+                realYerlesen: yerlesen,
+                realPuan: enKucuk,
+                base: puanToSiralama(enKucuk),
+                kaynak: kaynak === 'L' ? 'Lisans' : 'Önlisans'
+            });
+        });
+
+        // UI Güncelle
+        document.getElementById('dbCount').innerText = data.length.toLocaleString();
+        document.getElementById('dbInfo').innerText = `${uniSet.size} Üniversite | ${totalKontenjan.toLocaleString()} Kontenjan`;
+        document.getElementById('sysText').innerText = `${data.length.toLocaleString()} Program Aktif`;
+
+        return data;
+    }
+
+    const REAL_DATA = buildDatabase();
+
+    // === MAX-HEAP VERİ YAPISI (KURŞUN GEÇİRMEZ) ===
     class MaxHeap {
         constructor() { this.heap = []; }
-        push(val) { this.heap.push(val); this.bubbleUp(); }
+        
+        push(val) { 
+            // Undefined, null veya rank değeri olmayan verileri engelle
+            if (!val || typeof val.rank === 'undefined') return; 
+            this.heap.push(val); 
+            this.bubbleUp(); 
+        }
+        
         pop() {
-            if (this.size() === 1) return this.heap.pop();
-            const top = this.heap[0]; this.heap[0] = this.heap.pop(); this.bubbleDown();
+            if (this.heap.length === 0) return null;
+            if (this.heap.length === 1) return this.heap.pop();
+            
+            const top = this.heap[0]; 
+            const bottom = this.heap.pop();
+            
+            // Eğer hala eleman kaldıysa ve bottom undefined değilse yukarı al
+            if (this.heap.length > 0 && bottom) {
+                this.heap[0] = bottom; 
+                this.bubbleDown();
+            }
             return top;
         }
-        peek() { return this.heap[0]; }
+        
+        peek() { 
+            return this.heap.length > 0 ? this.heap[0] : null; 
+        }
+        
         size() { return this.heap.length; }
+        
         bubbleUp() {
             let index = this.heap.length - 1;
             while (index > 0) {
-                let parentIndex = Math.floor((index - 1) / 2);
-                if (this.heap[parentIndex].rank >= this.heap[index].rank) break;
-                [this.heap[parentIndex], this.heap[index]] = [this.heap[index], this.heap[parentIndex]];
-                index = parentIndex;
+                let p = Math.floor((index - 1) / 2);
+                // Güvenlik kontrolleri
+                if (!this.heap[p] || !this.heap[index]) break;
+                
+                if (this.heap[p].rank >= this.heap[index].rank) break;
+                [this.heap[p], this.heap[index]] = [this.heap[index], this.heap[p]];
+                index = p;
             }
         }
+        
         bubbleDown() {
             let index = 0;
             while (true) {
-                let left = 2 * index + 1, right = 2 * index + 2, swap = null;
-                if (left < this.heap.length) if (this.heap[left].rank > this.heap[index].rank) swap = left;
-                if (right < this.heap.length) if (this.heap[right].rank > (swap === null ? this.heap[index].rank : this.heap[left].rank)) swap = right;
+                let l = 2 * index + 1;
+                let r = 2 * index + 2;
+                let swap = null;
+                
+                // Index elemanı null ise çık
+                if (!this.heap[index]) break;
+                
+                let currentRank = this.heap[index].rank;
+
+                // Sol çocuk kontrolü
+                if (l < this.heap.length && this.heap[l]) {
+                    if (this.heap[l].rank > currentRank) {
+                        swap = l;
+                    }
+                }
+                
+                // Sağ çocuk kontrolü
+                let compareRank = (swap === null) ? currentRank : this.heap[l].rank;
+                if (r < this.heap.length && this.heap[r]) {
+                    if (this.heap[r].rank > compareRank) {
+                        swap = r;
+                    }
+                }
+                
                 if (swap === null) break;
                 [this.heap[index], this.heap[swap]] = [this.heap[swap], this.heap[index]];
                 index = swap;
@@ -136,380 +445,316 @@
         }
     }
 
-    const DEPT_TEMPLATES = [
-        { name: "Tıp Fakültesi", area: "SAY", baseCalc: 2000, quotaBase: 150 },
-        { name: "Diş Hekimliği Fakültesi", area: "SAY", baseCalc: 19000, quotaBase: 90 },
-        { name: "Eczacılık Fakültesi", area: "SAY", baseCalc: 36000, quotaBase: 80 },
-        { name: "Bilgisayar Mühendisliği (İngilizce)", area: "SAY", baseCalc: 2800, quotaBase: 80 },
-        { name: "Yazılım Mühendisliği", area: "SAY", baseCalc: 9000, quotaBase: 70 },
-        { name: "Yapay Zeka Mühendisliği", area: "SAY", baseCalc: 4000, quotaBase: 40 },
-        { name: "Elektrik-Elektronik Mühendisliği", area: "SAY", baseCalc: 7000, quotaBase: 90 },
-        { name: "Endüstri Mühendisliği", area: "SAY", baseCalc: 8000, quotaBase: 90 },
-        { name: "Makine Mühendisliği", area: "SAY", baseCalc: 48000, quotaBase: 100 },
-        { name: "Havacılık ve Uzay Mühendisliği", area: "SAY", baseCalc: 6000, quotaBase: 50 },
-        { name: "Hemşirelik", area: "SAY", baseCalc: 160000, quotaBase: 120 },
-        { name: "Beslenme ve Diyetetik", area: "SAY", baseCalc: 210000, quotaBase: 70 },
-        { name: "Fizyoterapi ve Rehabilitasyon", area: "SAY", baseCalc: 240000, quotaBase: 80 },
-        { name: "Veteriner Fakültesi", area: "SAY", baseCalc: 115000, quotaBase: 100 },
-        { name: "Mimarlık", area: "SAY", baseCalc: 95000, quotaBase: 60 },
-        { name: "İnşaat Mühendisliği", area: "SAY", baseCalc: 140000, quotaBase: 70 },
-        { name: "Hukuk Fakültesi", area: "EA", baseCalc: 9000, quotaBase: 250 },
-        { name: "Psikoloji (İngilizce)", area: "EA", baseCalc: 14000, quotaBase: 70 },
-        { name: "Sınıf Öğretmenliği", area: "EA", baseCalc: 105000, quotaBase: 60 },
-        { name: "Rehberlik ve Psikolojik Danışmanlık (RPD)", area: "EA", baseCalc: 90000, quotaBase: 80 },
-        { name: "Yönetim Bilişim Sistemleri (YBS)", area: "EA", baseCalc: 22000, quotaBase: 80 },
-        { name: "İşletme (İngilizce)", area: "EA", baseCalc: 38000, quotaBase: 100 },
-        { name: "İktisat", area: "EA", baseCalc: 45000, quotaBase: 90 },
-        { name: "Siyaset Bilimi ve Kamu Yönetimi", area: "EA", baseCalc: 50000, quotaBase: 80 },
-        { name: "Uluslararası İlişkiler", area: "EA", baseCalc: 65000, quotaBase: 70 },
-        { name: "Maliye", area: "EA", baseCalc: 180000, quotaBase: 100 },
-        { name: "Özel Eğitim Öğretmenliği", area: "SÖZ", baseCalc: 11000, quotaBase: 60 },
-        { name: "Okul Öncesi Öğretmenliği", area: "SÖZ", baseCalc: 16000, quotaBase: 70 },
-        { name: "Gastronomi ve Mutfak Sanatları", area: "SÖZ", baseCalc: 32000, quotaBase: 80 },
-        { name: "Türkçe Öğretmenliği", area: "SÖZ", baseCalc: 25000, quotaBase: 60 },
-        { name: "Tarih Öğretmenliği", area: "SÖZ", baseCalc: 48000, quotaBase: 50 },
-        { name: "Coğrafya", area: "SÖZ", baseCalc: 110000, quotaBase: 60 },
-        { name: "Radyo, Televizyon ve Sinema", area: "SÖZ", baseCalc: 80000, quotaBase: 80 },
-        { name: "Halkla İlişkiler ve Tanıtım", area: "SÖZ", baseCalc: 140000, quotaBase: 90 },
-        { name: "İlahiyat", area: "SÖZ", baseCalc: 125000, quotaBase: 180 },
-        { name: "İngilizce Öğretmenliği", area: "DİL", baseCalc: 8500, quotaBase: 80 },
-        { name: "İngiliz Dili ve Edebiyatı", area: "DİL", baseCalc: 19000, quotaBase: 70 },
-        { name: "Mütercim-Tercümanlık (İngilizce)", area: "DİL", baseCalc: 13000, quotaBase: 60 },
-        { name: "Alman Dili ve Edebiyatı", area: "DİL", baseCalc: 28000, quotaBase: 50 },
-        { name: "İlk ve Acil Yardım (Anestezi/Tıbbi)", area: "EA", baseCalc: 180000, quotaBase: 70 },
-        { name: "Bilgisayar Programcılığı", area: "EA", baseCalc: 150000, quotaBase: 80 },
-        { name: "Adalet", area: "EA", baseCalc: 220000, quotaBase: 90 },
-        { name: "Grafik Tasarımı", area: "EA", baseCalc: 310000, quotaBase: 60 },
-        { name: "Lojistik", area: "EA", baseCalc: 420000, quotaBase: 70 }
-    ];
-
-    const UNIVERSITIES = [
-        { name: "Boğaziçi Üniversitesi", city: "İstanbul", region: "Marmara", cat: "Köklü", rankMultiplier: 0.08, pop: 1.0 },
-        { name: "Orta Doğu Teknik Üniversitesi (ODTÜ)", city: "Ankara", region: "İç Anadolu", cat: "Köklü", rankMultiplier: 0.12, pop: 1.0 },
-        { name: "İstanbul Teknik Üniversitesi (İTÜ)", city: "İstanbul", region: "Marmara", cat: "Köklü", rankMultiplier: 0.18, pop: 0.99 },
-        { name: "Hacettepe Üniversitesi", city: "Ankara", region: "İç Anadolu", cat: "Köklü", rankMultiplier: 0.28, pop: 0.98 },
-        { name: "Ankara Üniversitesi", city: "Ankara", region: "İç Anadolu", cat: "Köklü", rankMultiplier: 0.45, pop: 0.95 },
-        { name: "İstanbul Üniversitesi", city: "İstanbul", region: "Marmara", cat: "Köklü", rankMultiplier: 0.50, pop: 0.94 },
-        { name: "Yıldız Teknik Üniversitesi", city: "İstanbul", region: "Marmara", cat: "Köklü", rankMultiplier: 0.35, pop: 0.96 },
-        { name: "Gazi Üniversitesi", city: "Ankara", region: "İç Anadolu", cat: "Köklü", rankMultiplier: 0.60, pop: 0.92 },
-        { name: "Ege Üniversitesi", city: "İzmir", region: "Ege", cat: "Köklü", rankMultiplier: 0.65, pop: 0.93 },
-        { name: "Dokuz Eylül Üniversitesi", city: "İzmir", region: "Ege", cat: "Köklü", rankMultiplier: 0.75, pop: 0.91 },
-        { name: "Marmara Üniversitesi", city: "İstanbul", region: "Marmara", cat: "Köklü", rankMultiplier: 0.55, pop: 0.94 },
-        { name: "Koç Üniversitesi (Burslu)", city: "İstanbul", region: "Marmara", cat: "Köklü", rankMultiplier: 0.04, pop: 1.0 },
-        { name: "Bilkent Üniversitesi (Burslu)", city: "Ankara", region: "İç Anadolu", cat: "Köklü", rankMultiplier: 0.06, pop: 1.0 },
-        { name: "Sabancı Üniversitesi (Burslu)", city: "İstanbul", region: "Marmara", cat: "Köklü", rankMultiplier: 0.05, pop: 1.0 },
-        { name: "TOBB ETÜ", city: "Ankara", region: "İç Anadolu", cat: "Köklü", rankMultiplier: 0.40, pop: 0.92 },
-        { name: "Akdeniz Üniversitesi", city: "Antalya", region: "Akdeniz", cat: "Anadolu", rankMultiplier: 1.2, pop: 0.89 },
-        { name: "Anadolu Üniversitesi", city: "Eskişehir", region: "İç Anadolu", cat: "Anadolu", rankMultiplier: 1.1, pop: 0.92 },
-        { name: "Eskişehir Osmangazi Üniversitesi", city: "Eskişehir", region: "İç Anadolu", cat: "Anadolu", rankMultiplier: 1.4, pop: 0.88 },
-        { name: "Bursa Uludağ Üniversitesi", city: "Bursa", region: "Marmara", cat: "Anadolu", rankMultiplier: 1.6, pop: 0.86 },
-        { name: "Kocaeli Üniversitesi", city: "Kocaeli", region: "Marmara", cat: "Anadolu", rankMultiplier: 1.3, pop: 0.87 },
-        { name: "Sakarya Üniversitesi", city: "Sakarya", region: "Marmara", cat: "Anadolu", rankMultiplier: 1.7, pop: 0.84 },
-        { name: "Çukurova Üniversitesi", city: "Adana", region: "Akdeniz", cat: "Anadolu", rankMultiplier: 1.9, pop: 0.81 },
-        { name: "Selçuk Üniversitesi", city: "Konya", region: "İç Anadolu", cat: "Anadolu", rankMultiplier: 2.0, pop: 0.80 },
-        { name: "Muğla Sıtkı Koçman Üniversitesi", city: "Muğla", region: "Ege", cat: "Anadolu", rankMultiplier: 1.8, pop: 0.85 },
-        { name: "Pamukkale Üniversitesi", city: "Denizli", region: "Ege", cat: "Anadolu", rankMultiplier: 1.9, pop: 0.82 },
-        { name: "Burdur Mehmet Akif Ersoy Üni. (MAKÜ)", city: "Burdur", region: "Akdeniz", cat: "Anadolu", rankMultiplier: 2.3, pop: 0.83 },
-        { name: "Ondokuz Mayıs Üniversitesi", city: "Samsun", region: "Karadeniz", cat: "Anadolu", rankMultiplier: 2.1, pop: 0.81 },
-        { name: "Karadeniz Teknik Üniversitesi", city: "Trabzon", region: "Karadeniz", cat: "Anadolu", rankMultiplier: 2.2, pop: 0.79 },
-        { name: "Erciyes Üniversitesi", city: "Kayseri", region: "İç Anadolu", cat: "Anadolu", rankMultiplier: 2.4, pop: 0.78 },
-        { name: "İnönü Üniversitesi", city: "Malatya", region: "Doğu Anadolu", cat: "Anadolu", rankMultiplier: 2.6, pop: 0.75 },
-        { name: "Gaziantep Üniversitesi", city: "Gaziantep", region: "Güneydoğu", cat: "Anadolu", rankMultiplier: 2.3, pop: 0.77 },
-        { name: "Mersin Üniversitesi", city: "Mersin", region: "Akdeniz", cat: "Anadolu", rankMultiplier: 1.8, pop: 0.83 },
-        { name: "Aydın Adnan Menderes Üniversitesi", city: "Aydın", region: "Ege", cat: "Anadolu", rankMultiplier: 1.9, pop: 0.82 },
-        { name: "Balıkesir Üniversitesi", city: "Balıkesir", region: "Marmara", cat: "Anadolu", rankMultiplier: 2.1, pop: 0.80 },
-        { name: "Çanakkale 18 Mart Üniversitesi", city: "Çanakkale", region: "Marmara", cat: "Anadolu", rankMultiplier: 1.6, pop: 0.87 },
-        { name: "Manisa Celal Bayar Üniversitesi", city: "Manisa", region: "Ege", cat: "Anadolu", rankMultiplier: 1.8, pop: 0.82 },
-        { name: "Tekirdağ Namık Kemal Üniversitesi", city: "Tekirdağ", region: "Marmara", cat: "Anadolu", rankMultiplier: 1.9, pop: 0.81 },
-        { name: "Dumlupınar Üniversitesi", city: "Kütahya", region: "Ege", cat: "Anadolu", rankMultiplier: 2.5, pop: 0.74 },
-        { name: "Afyon Kocatepe Üniversitesi", city: "Afyon", region: "Ege", cat: "Anadolu", rankMultiplier: 2.6, pop: 0.73 },
-        { name: "Süleyman Demirel Üniversitesi", city: "Isparta", region: "Akdeniz", cat: "Anadolu", rankMultiplier: 2.2, pop: 0.79 },
-        { name: "Necmettin Erbakan Üniversitesi", city: "Konya", region: "İç Anadolu", cat: "Anadolu", rankMultiplier: 2.4, pop: 0.75 },
-        { name: "Fırat Üniversitesi", city: "Elazığ", region: "Doğu Anadolu", cat: "Anadolu", rankMultiplier: 2.5, pop: 0.76 },
-        { name: "Dicle Üniversitesi", city: "Diyarbakır", region: "Güneydoğu", cat: "Anadolu", rankMultiplier: 2.7, pop: 0.74 },
-        { name: "Sivas Cumhuriyet Üniversitesi", city: "Sivas", region: "İç Anadolu", cat: "Taşra", rankMultiplier: 3.2, pop: 0.71 },
-        { name: "Atatürk Üniversitesi", city: "Erzurum", region: "Doğu Anadolu", cat: "Taşra", rankMultiplier: 3.0, pop: 0.74 },
-        { name: "Bolu Abant İzzet Baysal Üni.", city: "Bolu", region: "Karadeniz", cat: "Taşra", rankMultiplier: 2.7, pop: 0.77 },
-        { name: "Van Yüzüncü Yıl Üniversitesi", city: "Van", region: "Doğu Anadolu", cat: "Taşra", rankMultiplier: 4.0, pop: 0.66 },
-        { name: "Düzce Üniversitesi", city: "Düzce", region: "Karadeniz", cat: "Taşra", rankMultiplier: 3.3, pop: 0.70 },
-        { name: "Zonguldak Bülent Ecevit Üni.", city: "Zonguldak", region: "Karadeniz", cat: "Taşra", rankMultiplier: 3.1, pop: 0.72 },
-        { name: "Tokat Gaziosmanpaşa Üni.", city: "Tokat", region: "Karadeniz", cat: "Taşra", rankMultiplier: 3.6, pop: 0.67 },
-        { name: "Amasya Üniversitesi", city: "Amasya", region: "Karadeniz", cat: "Taşra", rankMultiplier: 3.4, pop: 0.69 },
-        { name: "Kırıkkale Üniversitesi", city: "Kırıkkale", region: "İç Anadolu", cat: "Taşra", rankMultiplier: 2.9, pop: 0.73 },
-        { name: "Kastamonu Üniversitesi", city: "Kastamonu", region: "Karadeniz", cat: "Taşra", rankMultiplier: 3.8, pop: 0.64 },
-        { name: "Kırklareli Üniversitesi", city: "Kırklareli", region: "Marmara", cat: "Taşra", rankMultiplier: 3.2, pop: 0.70 },
-        { name: "Sinop Üniversitesi", city: "Sinop", region: "Karadeniz", cat: "Taşra", rankMultiplier: 3.7, pop: 0.66 },
-        { name: "Giresun Üniversitesi", city: "Giresun", region: "Karadeniz", cat: "Taşra", rankMultiplier: 3.8, pop: 0.65 },
-        { name: "Rize Recep Tayyip Erdoğan Üni.", city: "Rize", region: "Karadeniz", cat: "Taşra", rankMultiplier: 3.5, pop: 0.68 },
-        { name: "Yozgat Bozok Üniversitesi", city: "Yozgat", region: "İç Anadolu", cat: "Taşra", rankMultiplier: 4.5, pop: 0.60 },
-        { name: "Ahi Evran Üniversitesi", city: "Kırşehir", region: "İç Anadolu", cat: "Taşra", rankMultiplier: 3.6, pop: 0.66 },
-        { name: "Niğde Ömer Halisdemir Üni.", city: "Niğde", region: "İç Anadolu", cat: "Taşra", rankMultiplier: 3.5, pop: 0.68 },
-        { name: "Aksaray Üniversitesi", city: "Aksaray", region: "İç Anadolu", cat: "Taşra", rankMultiplier: 3.6, pop: 0.67 },
-        { name: "Karamanoglu Mehmetbey Üni.", city: "Karaman", region: "İç Anadolu", cat: "Taşra", rankMultiplier: 4.6, pop: 0.59 },
-        { name: "Kafkas Üniversitesi", city: "Kars", region: "Doğu Anadolu", cat: "Taşra", rankMultiplier: 5.2, pop: 0.58 },
-        { name: "Bingöl Üniversitesi", city: "Bingöl", region: "Doğu Anadolu", cat: "Taşra", rankMultiplier: 5.6, pop: 0.56 },
-        { name: "Hakkari Üniversitesi", city: "Hakkari", region: "Doğu Anadolu", cat: "Taşra", rankMultiplier: 7.2, pop: 0.49 },
-        { name: "Şırnak Üniversitesi", city: "Şırnak", region: "Güneydoğu", cat: "Taşra", rankMultiplier: 7.0, pop: 0.51 },
-        { name: "Bayburt Üniversitesi", city: "Bayburt", region: "Karadeniz", cat: "Taşra", rankMultiplier: 6.2, pop: 0.54 },
-        { name: "Munzur Üniversitesi", city: "Tunceli", region: "Doğu Anadolu", cat: "Taşra", rankMultiplier: 6.0, pop: 0.55 },
-        { name: "Ardahan Üniversitesi", city: "Ardahan", region: "Doğu Anadolu", cat: "Taşra", rankMultiplier: 6.4, pop: 0.52 },
-        { name: "Bitlis Eren Üniversitesi", city: "Bitlis", region: "Doğu Anadolu", cat: "Taşra", rankMultiplier: 5.5, pop: 0.57 },
-        { name: "Mardin Artuklu Üniversitesi", city: "Mardin", region: "Güneydoğu", cat: "Taşra", rankMultiplier: 4.4, pop: 0.62 },
-        { name: "Batman Üniversitesi", city: "Batman", region: "Güneydoğu", cat: "Taşra", rankMultiplier: 4.6, pop: 0.61 },
-        { name: "Siirt Üniversitesi", city: "Siirt", region: "Güneydoğu", cat: "Taşra", rankMultiplier: 5.0, pop: 0.58 },
-        { name: "Doğu Akdeniz Üniversitesi (KKTC)", city: "Gazimağusa", region: "KKTC", cat: "Taşra", rankMultiplier: 4.8, pop: 0.60 }
-    ];
-
-    const REAL_DATA = [];
-    let uniqueIdCounter = 0;
-
-    UNIVERSITIES.forEach(uni => {
-        DEPT_TEMPLATES.forEach(dept => {
-            let calculatedBase = Math.round(dept.baseCalc * uni.rankMultiplier);
-            if (calculatedBase > 1200000) calculatedBase = 1100000 + (uniqueIdCounter % 50000);
-            if (calculatedBase < 100) calculatedBase = 200;
-
-            if (uni.cat === "Taşra") {
-                if (dept.name.includes("Tıp") || dept.name.includes("Diş") || dept.name.includes("Yapay Zeka") || dept.name.includes("Havacılık")) {
-                    if (uniqueIdCounter % 4 !== 0) return;
-                }
-            }
-            if (uni.name.includes("Burslu") || uni.name.includes("ODTÜ") || uni.name.includes("Boğaziçi") || uni.name.includes("İTÜ")) {
-                if (dept.name.includes("İlk ve Acil") || dept.name.includes("Programcılığı") || dept.name.includes("Adalet") || dept.name.includes("Grafik")) {
-                    return;
-                }
-            }
-
-            REAL_DATA.push({
-                id: uniqueIdCounter++, name: dept.name, uni: uni.name, city: uni.city, region: uni.region, area: dept.area, cat: uni.cat, quota: dept.quotaBase, base: calculatedBase, pop: uni.pop
-            });
-        });
-    });
-
-    let students = [];
-    let deptRes = [];
-    let charts = {};
-
+    // === MATEMATİK: Box-Muller Gauss Dağılımı ===
     function boxMuller() {
         let u=0, v=0; while(u===0) u=Math.random(); while(v===0) v=Math.random();
         return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
     }
 
-    // --- DOĞRULANABİLİR ÇARPIK (SKEWED) DAĞILIM MOTORU ---
-    function generateSkewedScore() {
+    function generateSkewedScore(obpEffect) {
         let baseG = boxMuller();
-        // Gerçekçi ÖSYM yığılması için sağa çarpık katsayı manipülasyonu
-        let skewFactor = baseG < 0 ? baseG * 1.25 : baseG * 0.85; 
-        let score = skewFactor * 52 + 278;
-        return Math.max(150, Math.min(560, score)); // Max score updated to 560 for realistic bounds (including OBP)
+        let skewFactor = baseG < 0 ? baseG * 1.25 : baseG * 0.85;
+        let score = skewFactor * 55 + 275;
+        if (obpEffect > 0) {
+            let noise = boxMuller() * (obpEffect / 1.5);
+            score += noise;
+        }
+        return Math.max(150, Math.min(560, score));
     }
 
+    // === SİMÜLASYON MOTORU ===
     document.getElementById('startBtn').addEventListener('click', async function() {
         const N = parseInt(document.getElementById('studentCount').value);
         const mode = document.getElementById('simMode').value;
         const bars = document.getElementById('useBarriers').checked;
         const intensity = parseInt(document.getElementById('policyIntensity').value) / 100;
-        
-        document.getElementById('loader').style.display = 'flex';
-        this.disabled = true;
+        const obpInflation = parseInt(document.getElementById('obpInflation').value);
 
+        const loader = document.getElementById('loader');
+        loader.style.visibility = 'visible';
+        loader.style.opacity = '1';
+        this.disabled = true;
+        await new Promise(r => setTimeout(r, 100));
+
+        // Her programa Heap kur ve politika uygula
         deptRes = REAL_DATA.map((d, i) => {
-            let q = Math.round(d.quota * (N/50000));
-            let p = d.pop;
-            if(mode === 'crisis') {
-                if(d.city === "İstanbul" || d.city === "Ankara") p *= (1 - (intensity * 0.85));
-                if(d.uni.includes("MAKÜ") || d.cat === "Taşra") p *= (1 + (intensity * 4.0));
+            let q = d.quota;
+            let pop = 0.8;
+            if (d.realPuan >= 450) pop = 1.0;
+            else if (d.realPuan >= 400) pop = 0.95;
+            else if (d.realPuan >= 350) pop = 0.88;
+            else if (d.realPuan >= 300) pop = 0.78;
+            else if (d.realPuan >= 250) pop = 0.65;
+            else pop = 0.50;
+
+            if (mode === 'crisis') {
+                const city = (d.uni.match(/\(([^)]+)\)$/) || [])[1] || '';
+                if (city.includes('İSTANBUL') || city.includes('ANKARA')) pop *= (1 - (intensity * 0.6));
+                if (d.region === 'Doğu Anadolu' || d.region === 'Güneydoğu') pop *= (1 + (intensity * 2.0));
             }
-            if(mode === 'anadolu' && d.cat === "Anadolu") { q = Math.round(q * (1 + (intensity * 0.8))); }
-            return { ...d, quota: Math.max(1, q), currentPop: p, heap: new MaxHeap() };
+            if (mode === 'anadolu' && d.region !== 'Marmara' && d.region !== 'İç Anadolu') {
+                q = Math.round(q * (1 + (intensity * 0.5)));
+            }
+            
+            // OPTİMİZASYON: Aday döngüsünde yavaşlatan string (.includes) aramalarını buraya aldık
+            const isTip = d.name.includes("Tıp") && !d.name.includes("Tıbbi");
+            const isDis = d.name.includes("Diş Hekimliği");
+            const isEcz = d.name.includes("Eczacılık");
+            const isHukuk = d.name.includes("Hukuk");
+
+            return { 
+                ...d, id: i, quota: Math.max(1, q), currentPop: pop, 
+                heap: new MaxHeap(),
+                isTip, isDis, isEcz, isHukuk
+            };
         });
 
-        const areaIndices = { SAY: [], EA: [], SÖZ: [], DİL: [] };
-        deptRes.forEach(d => { if(areaIndices[d.area]) areaIndices[d.area].push(d); });
+        const areaIndices = {};
+        deptRes.forEach(d => {
+            if (!areaIndices[d.area]) areaIndices[d.area] = [];
+            areaIndices[d.area].push(d);
+        });
 
-        // Coğrafi Dağılım Havuzu
+        // SÜPER OPTİMİZASYON: Tüm havuzları baştan taban puanına göre küçükten büyüğe sıralıyoruz
+        Object.keys(areaIndices).forEach(k => {
+            areaIndices[k].sort((a, b) => a.base - b.base);
+        });
+
         const REGIONS = ["Marmara", "İç Anadolu", "Ege", "Akdeniz", "Karadeniz", "Doğu Anadolu", "Güneydoğu"];
 
-        students = [];
-        const chunkSize = 20000;
-        for(let i=0; i<N; i++) {
-            let score = generateSkewedScore();
-            let area = (i % 10 < 3) ? "SAY" : ((i % 10 < 7) ? "EA" : ((i % 10 < 9) ? "SÖZ" : "DİL"));
-            let studentHome = REGIONS[i % REGIONS.length]; // Her adaya bir bölge atandı
-            
-            students.push({ id: 500000+i, score, area, homeRegion: studentHome, rank: 0, placed: null, choices: [], nextChoiceIdx: 0 });
-            
-            if(i > 0 && i % chunkSize === 0) {
-                updateProgress((i/N)*15, "Doğrulanabilir Aday Havuzu Modelleniyor...");
+        // ADAY ÜRETİMİ (Önceden hafıza tahsisli)
+        students = new Array(N);
+        const chunkSize = 100000;
+        for (let i = 0; i < N; i++) {
+            let score = generateSkewedScore(obpInflation);
+            let rnd = i % 20;
+            let area;
+            if (rnd < 7) area = "SAY";
+            else if (rnd < 13) area = "EA";
+            else if (rnd < 17) area = "SÖZ";
+            else if (rnd < 18) area = "DİL";
+            else area = "TYT";
+            let studentHome = REGIONS[i % REGIONS.length];
+            students[i] = { id: 1000000 + i, score, area, homeRegion: studentHome, rank: 0, placed: null, choices: [], nextChoiceIdx: 0 };
+            if (i > 0 && i % chunkSize === 0) {
+                updateProgress((i / N) * 10, `${(i / 1000).toFixed(0)}K / ${(N / 1000).toFixed(0)}K Aday Üretildi...`);
                 await new Promise(r => setTimeout(r, 0));
             }
         }
-        students.sort((a,b) => b.score - a.score).forEach((s, idx) => s.rank = idx + 1);
+        students.sort((a, b) => b.score - a.score).forEach((s, idx) => s.rank = idx + 1);
+        updateProgress(12, "Adaylar sıralandı, tercih listeleri hazırlanıyor...");
+        await new Promise(r => setTimeout(r, 0));
 
-        const participants = students.filter((s, idx) => idx % 100 < 92);
-        const pChunkSize = 5000;
+        // TERCİH SEPETİ (Coğrafi Bias dahil)
+        const participants = students.filter((s, idx) => idx % 100 < 96); // %96 Tercih yapıyor
+        const pChunkSize = 50000; 
         
-        for(let i=0; i<participants.length; i++) {
+        // Baraj sıralamaları (Gerçek 3 milyona göre ölçeklenmiş)
+        const tipBaraji = 50000;
+        const disBaraji = 80000;
+        const eczBaraji = 100000;
+        const hukukBaraji = 125000;
+        
+        function getStartIdx(arr, target) {
+            let left = 0, right = arr.length - 1, res = arr.length;
+            while(left <= right) {
+                let mid = (left + right) >> 1;
+                if(arr[mid].base >= target) { res = mid; right = mid - 1; }
+                else { left = mid + 1; }
+            }
+            return res;
+        }
+        
+        const scaleFactor = 3000000 / N;
+        
+        for (let i = 0; i < participants.length; i++) {
             const s = participants[i];
             const activePool = areaIndices[s.area] || [];
             
-            // --- TAM COMPLIANCE YÖK BARAJ FİLTRESİ ---
-            let pool = activePool.filter(d => {
-                if(bars) {
-                    if(d.name.includes("Tıp") && s.rank > 50000) return false;
-                    if(d.name.includes("Diş Hekimliği") && s.rank > 80000) return false;
-                    if(d.name.includes("Eczacılık") && s.rank > 100000) return false;
-                    if(d.name.includes("Hukuk") && s.rank > 125000) return false;
-                    if(d.name.includes("Mimarlık") && s.rank > 250000) return false;
-                    // String matching fix: Use "Mühendisli" for both "Mühendislik" and "Mühendisliği"
-                    if(d.name.includes("Mühendisli") && s.rank > 300000) return false;
-                    // String matching fix: Use "Öğretmenli" for both "Öğretmenlik" and "Öğretmenliği"
-                    if(d.name.includes("Öğretmenli") && s.rank > 300000) return false;
+            let topChoices = [];
+            
+            // ANALİZ DÜZELTMESİ: Simülasyon 100 bin kişi olsa bile gerçek yök atlas verisi 3 milyona göredir.
+            // Bu yüzden öğrencinin simülasyon sırasını gerçek sırasına çeviriyoruz.
+            const realRank = s.rank * scaleFactor;
+            
+            // Tercih aralığı: Öğrenci kendi sırasının %40 üstünü (hayal) ve 3 katı altını (garanti) yazar
+            const minBase = realRank * 0.40;
+            const maxBase = Math.max(realRank * 3.50, realRank + 300000); 
+            
+            const startJ = getStartIdx(activePool, minBase);
+            
+            for (let j = startJ; j < activePool.length; j++) {
+                let d = activePool[j];
+                
+                if (d.base > maxBase) break;
+                
+                if (bars) {
+                    if (d.isTip && realRank > tipBaraji) continue;
+                    if (d.isDis && realRank > disBaraji) continue;
+                    if (d.isEcz && realRank > eczBaraji) continue;
+                    if (d.isHukuk && realRank > hukukBaraji) continue;
                 }
-                return d.base >= s.rank * 0.1 && d.base <= s.rank * 12.0;
-            });
-            
-            // --- COĞRAFİ LOKALİZASYON BIAS ENTEGRASYONU ---
-            pool.sort((a,b) => {
-                let aBias = a.currentPop * (boxMuller() + 3);
-                let bBias = b.currentPop * (boxMuller() + 3);
                 
-                // Öğrenci kendi bölgesindeki okulları psikolojik olarak üstte konumlandırır
-                if(a.region === s.homeRegion) aBias *= 1.35;
-                if(b.region === s.homeRegion) bBias *= 1.35;
+                // MANTIK: Kendi sıralamasına yakın olan bölümler daha "caziptir".
+                let rankDiff = Math.abs(d.base - realRank);
+                let rankAffinity = 1.0 + (realRank / (rankDiff + realRank * 0.1));
                 
-                return bBias - aBias;
-            });
+                let bias = d.currentPop * (Math.random() + 0.2) * rankAffinity; 
+                if (d.region === s.homeRegion) bias *= 1.35;
+                
+                if (topChoices.length < 24) {
+                    topChoices.push({ id: d.id, base: d.base, bias: bias });
+                    if (topChoices.length === 24) topChoices.sort((a, b) => b.bias - a.bias);
+                } else if (bias > topChoices[23].bias) {
+                    let k = 22;
+                    while (k >= 0 && topChoices[k].bias < bias) {
+                        topChoices[k + 1] = topChoices[k];
+                        k--;
+                    }
+                    topChoices[k + 1] = { id: d.id, base: d.base, bias: bias };
+                }
+            }
             
-            s.choices = pool.slice(0, 24).sort((a,b) => a.base - b.base).map(x => x.id);
+            s.choices = topChoices.sort((a, b) => a.base - b.base).map(x => x.id);
             
-            if(i > 0 && i % pChunkSize === 0) {
-                updateProgress(15 + ((i/participants.length)*25), "Coğrafi Matris & Tercih Tercihleri İşleniyor...");
+            if (i > 0 && i % pChunkSize === 0) {
+                updateProgress(12 + ((i / participants.length) * 25), `Tercih: ${(i / 1000).toFixed(0)}K / ${(participants.length / 1000).toFixed(0)}K`);
                 await new Promise(r => setTimeout(r, 0));
             }
         }
 
-        // BUG FIX: Reddedilen adaylar eklendikçe participants listesinin boyutunun şişmesini engellemek için kopya alınır
-        let queue = [...participants]; 
-        const activeParticipantCount = participants.length;
+        // GALE-SHAPLEY ALGORİTMASI (Sıfır Hafıza Tahsisi - Zero GC Allocation Ring Buffer)
+        const qSize = participants.length;
+        let queue = new Array(qSize);
+        for(let i = 0; i < qSize; i++) queue[i] = participants[i];
+        
         let head = 0;
+        let tail = qSize;
         let totalSteps = 0;
-
-        // Performans Optimizasyonu: Map yerine Array lookup ile erişim hızını artırma
         const deptArray = [];
         deptRes.forEach(d => deptArray[d.id] = d);
+        
+        updateProgress(38, "Gale-Shapley Kararlı Eşleşme başlatılıyor...");
+        await new Promise(r => setTimeout(r, 0));
 
         async function runGaleShapley() {
-            const stepBatch = 15000;
-            while(head < queue.length) {
-                let s = queue[head];
-                head++; 
-
-                if(s.nextChoiceIdx >= s.choices.length) { s.placed = null; continue; }
-
-                let d = deptArray[s.choices[s.nextChoiceIdx]];
+            const stepBatch = 1000000; // Saniyede milyon adım
+            while (head < tail) {
+                let s = queue[head % qSize]; 
+                head++;
+                
+                if (s.nextChoiceIdx >= s.choices.length) { s.placed = null; continue; }
+                let d = deptArray[s.choices[s.nextChoiceIdx]]; 
                 s.nextChoiceIdx++;
-
-                if(d.heap.size() < d.quota) {
-                    d.heap.push(s);
+                
+                if (d.heap.size() < d.quota) {
+                    d.heap.push(s); 
                     s.placed = d.uni + " - " + d.name;
                 } else {
                     let worst = d.heap.peek();
-                    if(s.rank < worst.rank) {
-                        d.heap.pop();
-                        worst.placed = null;
-                        queue.push(worst); 
-                        d.heap.push(s);
+                    if (s.rank < worst.rank) {
+                        d.heap.pop(); 
+                        worst.placed = null; 
+                        queue[tail % qSize] = worst; tail++;
+                        d.heap.push(s); 
                         s.placed = d.uni + " - " + d.name;
-                    } else {
-                        queue.push(s); 
+                    } else { 
+                        queue[tail % qSize] = s; tail++; 
                     }
                 }
-
+                
                 totalSteps++;
-                if(totalSteps % stepBatch === 0) {
-                    updateProgress(40 + (Math.min(1, totalSteps / (activeParticipantCount * 3)) * 60), "Gale-Shapley Kararlı Eşleşme Dağıtılıyor...");
+                if (totalSteps % stepBatch === 0) {
+                    updateProgress(38 + (Math.min(1, totalSteps / (qSize * 4)) * 60), `GS: ${(totalSteps / 1000000).toFixed(1)}M adım`);
                     await new Promise(r => setTimeout(r, 0));
                 }
-                if(totalSteps > activeParticipantCount * 35) break; 
+                if (totalSteps > qSize * 50) break;
             }
-            finalizeUI(N, activeParticipantCount);
+            finalizeUI(N, qSize);
         }
-
         await runGaleShapley();
     });
 
     function updateProgress(p, t) {
         document.getElementById('loadBar').style.width = Math.min(100, p) + "%";
-        document.getElementById('loadPerc').innerText = "%" + Math.floor(p);
-        document.getElementById('loadStatus').innerText = t;
+        document.getElementById('loadPerc').innerText = Math.floor(p) + "%";
+        document.getElementById('loadDesc').innerText = t;
     }
 
     function finalizeUI(N, activeCount) {
         let placedArr = students.filter(s => s.placed);
-        document.getElementById('statRate').innerText = "%" + (placedArr.length/activeCount*100).toFixed(1);
-        document.getElementById('statCounts').innerText = `${placedArr.length.toLocaleString()} / ${(activeCount-placedArr.length).toLocaleString()}`;
-        document.getElementById('statQuota').innerText = deptRes.reduce((a,b) => a+b.quota, 0).toLocaleString();
+        document.getElementById('statRate').innerText = "%" + (placedArr.length / activeCount * 100).toFixed(1);
+        document.getElementById('statCounts').innerText = `${placedArr.length.toLocaleString()} / ${(activeCount - placedArr.length).toLocaleString()}`;
+        document.getElementById('statQuota').innerText = deptRes.reduce((a, b) => a + b.quota, 0).toLocaleString();
+
+        let sorted = deptRes.slice().sort((a, b) => (b.heap.size() / b.quota) - (a.heap.size() / a.quota));
+        document.getElementById('tableCount').innerText = `(${sorted.length.toLocaleString()} program)`;
 
         let tbody = "";
-        deptRes.sort((a,b) => (b.heap.size()/b.quota) - (a.heap.size()/a.quota)).slice(0, 150).forEach(d => {
-            let fill = (d.heap.size()/d.quota*100).toFixed(0);
+        sorted.slice(0, 300).forEach(d => {
+            let fill = d.quota > 0 ? (d.heap.size() / d.quota * 100).toFixed(0) : 0;
             let lastRank = d.heap.size() > 0 ? d.heap.peek().rank : 0;
-            let isMaku = d.uni.includes("MAKÜ");
-            tbody += `<tr class="${isMaku?'maku-row':''}">
-                <td><strong>${d.uni}</strong><br><small class="text-muted">${d.name}</small></td>
-                <td><span class="badge bg-secondary opacity-75">${d.area}</span></td>
-                <td>${d.cat}</td>
-                <td>${d.quota}</td>
-                <td>${d.heap.size()}</td>
-                <td class="badge-rank">${lastRank > 0 ? lastRank.toLocaleString() : 'Puan Düştü'}</td>
-                <td><div class="progress" style="display:flex; height: 10px;"><div class="progress-bar ${fill<100?'bg-warning':'bg-success'}" style="width:${fill}%"></div></div></td>
+            let turBadge = d.uniTuru === 'DEVLET' ? 'bg-primary' : 'bg-info';
+            tbody += `<tr>
+                <td class="ps-3"><strong style="font-size:0.8rem;">${d.uni}</strong><br><small class="text-muted">${d.name}</small></td>
+                <td><span class="data-badge bg-secondary bg-opacity-25 text-secondary border border-secondary">${d.area}</span></td>
+                <td><span class="data-badge ${turBadge} bg-opacity-25 text-dark">${d.uniTuru}</span></td>
+                <td class="fw-bold">${d.quota.toLocaleString()}</td>
+                <td class="text-success fw-bold">${d.heap.size().toLocaleString()}</td>
+                <td class="rank-badge">${lastRank > 0 ? lastRank.toLocaleString() : '-'}</td>
+                <td class="pe-3">
+                    <div class="d-flex align-items-center">
+                        <div class="progress-bar-custom w-100 me-2"><div class="${fill < 100 ? 'bg-warning' : 'bg-success'}" style="width:${Math.min(fill, 100)}%"></div></div>
+                        <small class="fw-bold text-muted">${fill}%</small>
+                    </div>
+                </td>
             </tr>`;
         });
         document.querySelector("#deptTable tbody").innerHTML = tbody;
         renderCharts();
-        document.getElementById('loader').style.display = 'none';
+        const loader = document.getElementById('loader');
+        loader.style.opacity = '0';
+        setTimeout(() => { loader.style.visibility = 'hidden'; }, 400);
         document.getElementById('startBtn').disabled = false;
         document.getElementById('csvBtn').disabled = false;
     }
 
     function renderCharts() {
-        ['chartArea', 'chartCat'].forEach(id => { if(charts[id]) charts[id].destroy(); });
+        ['chartArea', 'chartCat'].forEach(id => { if (charts[id]) charts[id].destroy(); });
+        const allAreas = [...new Set(deptRes.map(d => d.area))].sort();
         const ctxArea = document.getElementById('chartArea').getContext('2d');
+        let grad = ctxArea.createLinearGradient(0, 0, 0, 300);
+        grad.addColorStop(0, '#4f46e5'); grad.addColorStop(1, '#06b6d4');
         charts.chartArea = new Chart(ctxArea, {
             type: 'bar',
-            data: { labels: ['SAY','EA','SÖZ','DİL'], datasets: [{ label: '% Doluluk', data: ['SAY','EA','SÖZ','DİL'].map(a => {
-                let d = deptRes.filter(x => x.area === a);
-                let qSum = d.reduce((s,v)=>s+v.quota,0);
-                return qSum > 0 ? (d.reduce((s,v)=>s+v.heap.size(),0)/qSum*100).toFixed(1) : 0;
-            }), backgroundColor: '#10b981' }] },
-            options: { responsive: true, maintainAspectRatio: false }
+            data: { labels: allAreas, datasets: [{ label: '% Doluluk', data: allAreas.map(a => {
+                let d = deptRes.filter(x => x.area === a); let q = d.reduce((s, v) => s + v.quota, 0);
+                return q > 0 ? (d.reduce((s, v) => s + v.heap.size(), 0) / q * 100).toFixed(1) : 0;
+            }), backgroundColor: grad, borderRadius: 6 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
         const ctxCat = document.getElementById('chartCat').getContext('2d');
         charts.chartCat = new Chart(ctxCat, {
             type: 'doughnut',
-            data: { labels: ['Köklü','Anadolu','Taşra'], datasets: [{ data: ['Köklü','Anadolu','Taşra'].map(c => deptRes.filter(x=>x.cat===c).reduce((s,v)=>s+v.heap.size(),0)), backgroundColor: ['#0f172a','#10b981','#f59e0b'] }] },
-            options: { responsive: true, maintainAspectRatio: false }
+            data: { labels: ['DEVLET', 'VAKIF'], datasets: [{ data: ['DEVLET', 'VAKIF'].map(c => deptRes.filter(x => x.uniTuru === c).reduce((s, v) => s + v.heap.size(), 0)),
+                backgroundColor: ['#4f46e5', '#f59e0b'], borderWidth: 0, hoverOffset: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '75%' }
         });
     }
 
-    // --- SAF SENIOR CHUNK MEMORY SAVE EXPORT (ÇÖKME ENGELLENDİ) ---
+    // === CSV CHUNKING EXPORT ===
     document.getElementById('csvBtn').addEventListener('click', () => {
         let chunks = [];
         chunks.push("AdayID,SimuleSira,Alan,DogumBolgesi,YerlestigiProgram\n");
-        
         const subSize = 10000;
         for (let i = 0; i < students.length; i += subSize) {
             let slice = students.slice(i, i + subSize);
-            let rowBlock = slice.map(s => `${s.id},${s.rank},${s.area},${s.homeRegion},"${s.placed||'Açıkta Kaldı'}"`).join('\n');
+            let rowBlock = slice.map(s => `${s.id},${s.rank},${s.area},${s.homeRegion},"${s.placed || 'Açıkta Kaldı'}"`).join('\n');
             chunks.push(rowBlock + '\n');
         }
-        
         let blob = new Blob(["\uFEFF" + chunks.join('')], { type: 'text/csv;charset=utf-8;' });
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "YKS_vMax_Pro_Final_Output.csv";
-        link.click();
+        let link = document.createElement("a"); link.href = URL.createObjectURL(blob);
+        link.download = "YKS_OSYM_GercekVeri_Simulasyon.csv"; link.click();
     });
 </script>
 </body>
